@@ -1,2 +1,2 @@
 # neural_electronics
-a set of python script for training neural networks that emulates electronics devices and circuitry
+a set of python scripts for training neural networks that emulates electronic devices and circuitry
