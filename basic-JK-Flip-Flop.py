@@ -1,75 +1,62 @@
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
 
-# Function to simulate JK Flip-Flop behavior
+# Function to simulate the behavior of a JK Flip-Flop
 def simulate_jk_flip_flop(inputs, current_state):
-    # JK Flip-Flop truth table logic
-    j = inputs[:, 0]
-    k = inputs[:, 1]
+    next_state = np.zeros_like(current_state)
 
-    # Determine the next state
-    next_state = (current_state & ~j) | (j & ~k)
+    for i in range(len(inputs)):
+        if inputs[i, 0] == 1 and inputs[i, 1] == 0:  # J=1, K=0: Set Q to 1
+            next_state[i] = 1
+        elif inputs[i, 0] == 0 and inputs[i, 1] == 1:  # J=0, K=1: Reset Q to 0
+            next_state[i] = 0
+        elif inputs[i, 0] == 1 and inputs[i, 1] == 1:  # J=1, K=1: Toggle Q
+            next_state[i] = 1 - current_state[i]
+        else:  # J=0, K=0: Maintain the current state
+            next_state[i] = current_state[i]
 
     return next_state
 
-# Generate training dataset for JK Flip-Flop
-def generate_dataset(num_samples):
-    inputs = np.random.randint(0, 2, size=(num_samples, 2))  # Input data (J, K)
-    current_state = np.random.randint(0, 2, size=(num_samples, 1))  # Current state (Q)
-    outputs = simulate_jk_flip_flop(inputs, current_state)  # Simulate JK Flip-Flop behavior
+# Function to generate a dataset for the JK Flip-Flop
+def generate_jk_flip_flop_dataset(num_samples):
+    inputs = np.random.randint(0, 2, size=(num_samples, 2))  # Random binary inputs (J, K)
+    current_state = np.random.randint(0, 2, size=num_samples)  # Random initial state (Q)
+    outputs = simulate_jk_flip_flop(inputs, current_state)  # Simulate next state (Q+1)
 
     return inputs, current_state, outputs
 
-# Define a simple neural network model
-def create_model():
+# Function to create a neural network model for JK Flip-Flop emulation
+def create_jk_flip_flop_model():
     model = tf.keras.Sequential([
-        tf.keras.layers.Dense(4, activation='relu', input_shape=(3,)),  # Input layer (2 for J, K, 1 for Q)
-        tf.keras.layers.Dense(1, activation='sigmoid')  # Output layer
+        tf.keras.layers.Dense(8, activation='relu', input_shape=(2,)),  # Hidden layer with 8 neurons
+        tf.keras.layers.Dense(1, activation='sigmoid')  # Output layer with a single neuron for binary classification
     ])
 
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     return model
 
-# Train the neural network
-def train_neural_network(inputs, current_state, outputs, epochs=50):
-    model = create_model()
+# Generate a dataset for the JK Flip-Flop
+num_samples = 10000
+inputs, current_state, outputs = generate_jk_flip_flop_dataset(num_samples)
 
-    # Combine inputs and current state as the input to the neural network
-    input_data = np.column_stack((inputs, current_state))
+# Split the dataset into training and testing sets
+train_inputs, test_inputs, train_current_state, test_current_state, train_outputs, test_outputs = train_test_split(
+    inputs, current_state, outputs, test_size=0.2, random_state=42
+)
 
-    # Train the model
-    model.fit(input_data, outputs, epochs=epochs)
+# Create and compile the model
+jk_flip_flop_model = create_jk_flip_flop_model()
 
-    return model
+# Train the model
+jk_flip_flop_model.fit(
+    train_inputs,
+    train_outputs,
+    epochs=100,
+    verbose=1,
+    validation_split=0.2
+)
 
-# Test the trained model
-def test_model(model, test_inputs, test_current_state):
-    # Combine test inputs and current state as the input to the neural network
-    test_input_data = np.column_stack((test_inputs, test_current_state))
-
-    # Make predictions using the trained model
-    predictions = model.predict(test_input_data)
-
-    print("\nTest Results:")
-    print("Test Inputs (J, K):", test_inputs)
-    print("Test Current State (Q):", test_current_state.flatten())
-    print("Predicted Next State (Q+1):", np.round(predictions).flatten())
-
-# Main script
-if __name__ == "__main__":
-    # Generate training dataset
-	print("generating the dataset")
-    num_samples = 1000
-    train_inputs, train_current_state, train_outputs = generate_dataset(num_samples)
-
-    # Train the neural network
-	print("training the model")
-    trained_model = train_neural_network(train_inputs, train_current_state, train_outputs)
-
-    # Generate test dataset
-	print("testing the model")
-    num_test_samples = 10
-    test_inputs, test_current_state, _ = generate_dataset(num_test_samples)
-
-    # Test the trained model
-    test_model(trained_model, test_inputs, test_current_state)
+# Evaluate the model on the test set
+test_loss, test_accuracy = jk_flip_flop_model.evaluate(test_inputs, test_outputs, verbose=0)
+print(f'Test Accuracy: {test_accuracy * 100:.2f}%')
