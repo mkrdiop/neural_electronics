@@ -30,5 +30,7 @@ SR-latch.py	48.80%
 T-Flip-Flop.py	49.80%
 XNORgate.py	100.00%
 XORgate.py	100.00%
+
+
 ![image](https://github.com/mkrdiop/neural_electronics/assets/67843975/02d03b16-f49a-4e54-a9ee-df16a4579e90)
 
